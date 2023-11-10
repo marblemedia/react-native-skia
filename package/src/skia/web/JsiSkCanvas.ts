@@ -1,4 +1,4 @@
-import type { Canvas, CanvasKit } from "canvaskit-wasm";
+import type { Canvas, CanvasKit, MallocObj } from "canvaskit-wasm";
 
 import type {
   BlendMode,
@@ -7,6 +7,7 @@ import type {
   MipmapMode,
   PointMode,
   SaveLayerFlag,
+  ImageInfo,
   SkCanvas,
   SkColor,
   SkFont,
@@ -373,5 +374,34 @@ export class JsiSkCanvas
 
   drawPicture(skp: SkPicture) {
     this.ref.drawPicture(JsiSkPicture.fromValue(skp));
+  }
+
+  readPixels(
+    srcX: number,
+    srcY: number,
+    imageInfo: ImageInfo,
+    dest?: object,
+    bytesPerRow?: number
+  ): Float32Array | Uint8Array | null {
+    const colorType = Object.values(this.CanvasKit.ColorType).find(
+      ({ value }) => value === imageInfo.colorType
+    );
+    const alphaType = Object.values(this.CanvasKit.AlphaType).find(
+      ({ value }) => value === imageInfo.alphaType
+    );
+    const pxInfo = {
+      width: imageInfo.width,
+      height: imageInfo.height,
+      colorSpace: this.CanvasKit.ColorSpace.SRGB,
+      colorType,
+      alphaType,
+    };
+    return this.ref.readPixels(
+      srcX,
+      srcY,
+      pxInfo,
+      dest as MallocObj,
+      bytesPerRow
+    );
   }
 }

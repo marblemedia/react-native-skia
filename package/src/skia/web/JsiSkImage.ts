@@ -1,7 +1,8 @@
-import type { CanvasKit, Image } from "canvaskit-wasm";
+import type { CanvasKit, Image, MallocObj } from "canvaskit-wasm";
 
 import type {
   ImageFormat,
+  ImageInfo,
   FilterMode,
   MipmapMode,
   SkImage,
@@ -50,6 +51,16 @@ export class JsiSkImage extends HostObject<Image, "Image"> implements SkImage {
 
   width() {
     return this.ref.width();
+  }
+
+  getImageInfo(): ImageInfo {
+    const info = this.ref.getImageInfo();
+    return {
+      width: info.width,
+      height: info.height,
+      colorType: info.colorType.value,
+      alphaType: info.alphaType.value,
+    };
   }
 
   makeShaderOptions(
@@ -108,6 +119,37 @@ export class JsiSkImage extends HostObject<Image, "Image"> implements SkImage {
   encodeToBase64(fmt?: ImageFormat, quality?: number) {
     const bytes = this.encodeToBytes(fmt, quality);
     return toBase64String(bytes);
+  }
+
+  readPixels(
+    srcX?: number,
+    srcY?: number,
+    imageInfo?: ImageInfo,
+    dest?: object,
+    bytesPerRow?: number
+  ): Float32Array | Uint8Array | null {
+    const info = this.getImageInfo();
+    const colorType =
+      imageInfo?.colorType ?? this.CanvasKit.ColorType.RGBA_8888.value;
+    const alphaType = imageInfo?.alphaType ?? info.alphaType;
+    const pxInfo = {
+      colorSpace: this.CanvasKit.ColorSpace.SRGB,
+      width: imageInfo?.width ?? info.width,
+      height: imageInfo?.height ?? info.height,
+      colorType: Object.values(this.CanvasKit.ColorType).find(
+        ({ value }) => value === colorType
+      ),
+      alphaType: Object.values(this.CanvasKit.AlphaType).find(
+        ({ value }) => value === alphaType
+      ),
+    };
+    return this.ref.readPixels(
+      srcX ?? 0,
+      srcY ?? 0,
+      pxInfo,
+      dest as MallocObj,
+      bytesPerRow
+    );
   }
 
   dispose = () => {
