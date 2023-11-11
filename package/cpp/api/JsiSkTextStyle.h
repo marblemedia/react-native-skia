@@ -81,6 +81,8 @@ public:
                           .utf8(runtime)
                           .c_str();
       }
+
+      retVal.setFontFamilies(families);
     }
     if (object.hasProperty(runtime, "fontFeatures")) {
       auto propValue = object.getProperty(runtime, "fontFeatures")
