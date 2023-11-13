@@ -50,5 +50,5 @@
       "email": "wcandillon@gmail.com"
     }
   ],
-  "dependencies": {}
+  "packageManager": "yarn@4.0.1"
 }
