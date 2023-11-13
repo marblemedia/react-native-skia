@@ -199,6 +199,7 @@ public:
    */
   static EGLSurface createWindowedSurface(ANativeWindow *window) {
     const EGLint attribs[] = {EGL_NONE};
+    RNSkLogger::logToConsole("createWindowedSurface");
     return eglCreateWindowSurface(OpenGLResourceHolder::getInstance().glDisplay,
                                   OpenGLResourceHolder::getInstance().glConfig,
                                   window, attribs);

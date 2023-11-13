@@ -26,6 +26,8 @@ public abstract class SkiaBaseView extends ReactViewGroup implements TextureView
         mTexture = new TextureView(context);
         mTexture.setSurfaceTextureListener(this);
         mTexture.setOpaque(false);
+        SurfaceTexture surface = new SurfaceTexture(false);
+        mTexture.setSurfaceTexture(surface);
         addView(mTexture);
     }
 
@@ -43,8 +45,7 @@ public abstract class SkiaBaseView extends ReactViewGroup implements TextureView
             // This API Level is >= 26, we created our own SurfaceTexture to have a faster time to first frame
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
                 Log.i(tag, "Create SurfaceTexture");
-                SurfaceTexture surface = new SurfaceTexture(false);
-                mTexture.setSurfaceTexture(surface);
+                SurfaceTexture surface = mTexture.getSurfaceTexture();
                 this.onSurfaceTextureAvailable(surface, this.getMeasuredWidth(), this.getMeasuredHeight());
             }
         }
@@ -157,13 +158,18 @@ public abstract class SkiaBaseView extends ReactViewGroup implements TextureView
         return false;
     }
 
-    //private long _prevTimestamp = 0;
+    private long _prevTimestamp = 0;
+    private long _renderedFrames = 0;
+
     @Override
     public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-//        long timestamp = surface.getTimestamp();
-//        long frameDuration = (timestamp - _prevTimestamp)/1000000;
-//        Log.i(tag, "onSurfaceTextureUpdated "+frameDuration+"ms");
-//        _prevTimestamp = timestamp;
+       long timestamp = surface.getTimestamp();
+       long frameDuration = (timestamp - _prevTimestamp)/1000000;
+       if (_renderedFrames % 10 == 0) {
+        Log.i(tag, "onSurfaceTextureUpdated " + frameDuration + "ms; " + _renderedFrames + "f");
+       }
+       _prevTimestamp = timestamp;
+       _renderedFrames += 1;
     }
 
     protected abstract void surfaceAvailable(Object surface, int width, int height);

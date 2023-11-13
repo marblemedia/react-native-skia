@@ -120,6 +120,8 @@ android {
     }
     buildTypes {
         debug {
+            debuggable true
+            minifyEnabled false
             signingConfig signingConfigs.debug
         }
         release {

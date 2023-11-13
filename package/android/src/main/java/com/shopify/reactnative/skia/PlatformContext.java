@@ -8,6 +8,9 @@ import android.view.Choreographer;
 import com.facebook.jni.HybridData;
 import com.facebook.proguard.annotations.DoNotStrip;
 import com.facebook.react.bridge.ReactContext;
+import com.facebook.react.modules.core.ChoreographerCompat;
+import com.facebook.react.modules.core.ReactChoreographer;
+import com.facebook.react.uimanager.GuardedFrameCallback;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -18,8 +21,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-public class PlatformContext {
+public class PlatformContext  {
     @DoNotStrip
     private final HybridData mHybridData;
 
@@ -31,11 +35,19 @@ public class PlatformContext {
     private final String TAG = "PlatformContext";
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
-
+    private final ReactChoreographer mReactChoreographer;
+    private final ChoreographerCompat.FrameCallback mChoreographerCallback;
 
     public PlatformContext(ReactContext reactContext) {
         mContext = reactContext;
         mHybridData = initHybrid(reactContext.getResources().getDisplayMetrics().density);
+        mReactChoreographer = ReactChoreographer.getInstance();
+        mChoreographerCallback = new ChoreographerCompat.FrameCallback() {
+            @Override
+            public void doFrame(long frameTimeNanos) {
+                doMyFrame(frameTimeNanos);
+            }
+        };
     }
 
     private byte[] getStreamAsBytes(InputStream is) throws IOException {
@@ -49,19 +61,31 @@ public class PlatformContext {
     }
 
     private void postFrameLoop() {
-        Choreographer.FrameCallback frameCallback = new Choreographer.FrameCallback() {
-            @Override
-            public void doFrame(long frameTimeNanos) {
-                if (_isPaused) {
-                    return;
-                }
-                notifyDrawLoop();
-                if (_drawLoopActive) {
-                    postFrameLoop();
-                }
-            }
-        };
-        Choreographer.getInstance().postFrameCallback(frameCallback);
+        Log.i(TAG, "postFrameLoop");
+        mReactChoreographer.postFrameCallback(
+                ReactChoreographer.CallbackType.NATIVE_ANIMATED_MODULE, mChoreographerCallback);
+    }
+
+    private double lastFrameTimeMs = 0;
+
+    public void doMyFrame(long frameTimeNanos) {
+        if (_isPaused) {
+            return;
+        }
+        double currentFrameTimeMs = frameTimeNanos / 1000000.;
+        if (currentFrameTimeMs > lastFrameTimeMs) {
+            lastFrameTimeMs = currentFrameTimeMs;
+            notifyDrawLoop();
+        }
+        if (_drawLoopActive) {
+            doNextFrame();
+        }
+    }
+
+    public void doNextFrame() {
+        mReactChoreographer.postFrameCallback(
+                ReactChoreographer.CallbackType.NATIVE_ANIMATED_MODULE,
+                mChoreographerCallback);
     }
 
 
@@ -108,6 +132,8 @@ public class PlatformContext {
     public void endDrawLoop() {
         if (_drawLoopActive) {
             _drawLoopActive = false;
+            mReactChoreographer.removeFrameCallback(
+                ReactChoreographer.CallbackType.NATIVE_ANIMATED_MODULE, mChoreographerCallback);
         }
     }
 

@@ -1,5 +1,5 @@
 import type {SkRect} from '@shopify/react-native-skia';
-import {Group, Rect, Skia, useComputedValue} from '@shopify/react-native-skia';
+import {Group, Rect, useComputedValue} from '@shopify/react-native-skia';
 import React, {useMemo, useState} from 'react';
 import {Button, StyleSheet, Text, View, useWindowDimensions} from 'react-native';
 import {Gesture, GestureDetector} from 'react-native-gesture-handler';
