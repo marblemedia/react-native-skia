@@ -402,7 +402,7 @@ private:
   size_t _nativeId;
 
   size_t _drawingLoopId = 0;
-  std::atomic<int> _redrawRequestCounter = {1};
+  int _redrawRequestCounter = 0;
 };
 
 } // namespace RNSkia

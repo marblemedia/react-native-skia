@@ -54,7 +54,7 @@ public class PlatformContext  {
             };
         }
         ReactChoreographer.getInstance().postFrameCallback(
-                ReactChoreographer.CallbackType.NATIVE_ANIMATED_MODULE,
+                ReactChoreographer.CallbackType.IDLE_EVENT,
                 mChoreographerCallback);
     }
 
@@ -122,7 +122,7 @@ public class PlatformContext  {
         if (_drawLoopActive) {
             _drawLoopActive = false;
             ReactChoreographer.getInstance().removeFrameCallback(
-                ReactChoreographer.CallbackType.NATIVE_ANIMATED_MODULE, mChoreographerCallback);
+                ReactChoreographer.CallbackType.IDLE_EVENT, mChoreographerCallback);
         }
     }
 

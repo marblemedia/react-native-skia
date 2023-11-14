@@ -179,7 +179,7 @@ public:
     }
     auto shouldStart = false;
     {
-      std::lock_guard<std::mutex> lock(_drawCallbacksLock);
+      // std::lock_guard<std::mutex> lock(_drawCallbacksLock);
       _drawCallbacks.emplace(nativeId, std::move(callback));
       shouldStart = _drawCallbacks.size() == 1;
     }
@@ -201,7 +201,7 @@ public:
     }
     auto shouldStop = false;
     {
-      std::lock_guard<std::mutex> lock(_drawCallbacksLock);
+      // std::lock_guard<std::mutex> lock(_drawCallbacksLock);
       if (_drawCallbacks.count(nativeId) > 0) {
         _drawCallbacks.erase(nativeId);
       }
@@ -222,7 +222,7 @@ public:
     if (!_isValid) {
       return;
     }
-    std::lock_guard<std::mutex> lock(_drawCallbacksLock);
+    // std::lock_guard<std::mutex> lock(_drawCallbacksLock);
     for (auto it = _drawCallbacks.begin(); it != _drawCallbacks.end(); it++) {
       it->second(invalidated);
     }

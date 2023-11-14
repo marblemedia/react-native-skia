@@ -57,6 +57,7 @@ sk_sp<SkSurface> SkiaOpenGLSurfaceFactory::makeOffscreenSurface(int width,
 
 sk_sp<SkSurface> WindowSurfaceHolder::getSurface() {
   if (_skSurface == nullptr) {
+    RNSkLogger::logToConsole("getSurface: Creating new surface");
 
     // Setup OpenGL and Skia
     if (!SkiaOpenGLHelper::createSkiaDirectContextIfNecessary(
