@@ -4,16 +4,11 @@ import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.util.Log;
 import android.view.MotionEvent;
-import android.view.Surface;
 import android.view.TextureView;
 
-import com.facebook.jni.annotations.DoNotStrip;
 import com.facebook.react.views.view.ReactViewGroup;
 
 public abstract class SkiaBaseView extends ReactViewGroup implements TextureView.SurfaceTextureListener {
-
-    @DoNotStrip
-    private Surface mSurface;
     private TextureView mTexture;
 
     private String tag = "SkiaView";
@@ -30,12 +25,8 @@ public abstract class SkiaBaseView extends ReactViewGroup implements TextureView
     }
 
     public void destroySurface() {
-        if (mSurface != null) {
-            Log.i(tag, "destroySurface");
-            surfaceDestroyed();
-            mSurface.release();
-            mSurface = null;
-        }
+        Log.i(tag, "destroySurface");
+        surfaceDestroyed();
     }
 
     private void createSurfaceTexture() {
@@ -138,8 +129,7 @@ public abstract class SkiaBaseView extends ReactViewGroup implements TextureView
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
         Log.i(tag, "onSurfaceTextureAvailable " + width + "/" + height);
-        mSurface = new Surface(surface);
-        surfaceAvailable(mSurface, width, height);
+        surfaceAvailable(surface, width, height);
     }
 
     @Override
@@ -157,9 +147,13 @@ public abstract class SkiaBaseView extends ReactViewGroup implements TextureView
         return false;
     }
 
+    private long _prevTimestamp = 0;
     @Override
     public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-        // Nothing special to do here
+        long timestamp = surface.getTimestamp();
+        long frameDuration = (timestamp - _prevTimestamp)/1000000;
+        Log.i(tag, "onSurfaceTextureUpdated "+frameDuration+"ms");
+        _prevTimestamp = timestamp;
     }
 
     protected abstract void surfaceAvailable(Object surface, int width, int height);

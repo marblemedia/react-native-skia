@@ -5,6 +5,8 @@
 #include <fbjni/fbjni.h>
 #include <jni.h>
 
+#include <android/surface_texture.h>
+#include <android/surface_texture_jni.h>
 #include <android/native_window_jni.h>
 #include <condition_variable>
 #include <memory>
@@ -43,11 +45,17 @@ public:
 class WindowSurfaceHolder {
 public:
   WindowSurfaceHolder(jobject surface, int width, int height)
-      : _width(width), _height(height),
-        _window(ANativeWindow_fromSurface(facebook::jni::Environment::current(),
-                                          surface)) {}
+      : _width(width), _height(height) {
+          _surfaceTexture = ASurfaceTexture_fromSurfaceTexture(facebook::jni::Environment::current(), surface);
+          _window = ASurfaceTexture_acquireANativeWindow(
+            _surfaceTexture
+          );
+        }
 
-  ~WindowSurfaceHolder() { ANativeWindow_release(_window); }
+  ~WindowSurfaceHolder() {
+    ASurfaceTexture_release(_surfaceTexture);
+    ANativeWindow_release(_window);
+  }
 
   int getWidth() { return _width; }
   int getHeight() { return _height; }
@@ -65,7 +73,6 @@ public:
   void resize(int width, int height) {
     _width = width;
     _height = height;
-    _skSurface = nullptr;
   }
 
   /**
@@ -93,7 +100,7 @@ public:
 
 private:
   ANativeWindow *_window = nullptr;
-  sk_sp<SkSurface> _skSurface = nullptr;
+  ASurfaceTexture *_surfaceTexture = nullptr;
   EGLSurface _glSurface = EGL_NO_SURFACE;
   int _width = 0;
   int _height = 0;
