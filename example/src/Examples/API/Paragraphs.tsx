@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo } from "react";
-import { ScrollView, useWindowDimensions } from "react-native";
+import React, { useEffect, useMemo } from 'react';
+import { ScrollView, useWindowDimensions } from 'react-native';
 import {
   Canvas,
   FontSlant,
   FontWeight,
   Group,
+  PaintStyle,
   Paragraph,
   Rect,
   SkTextStyle,
@@ -12,14 +13,9 @@ import {
   TextDecoration,
   mix,
   useFonts,
-} from "@shopify/react-native-skia";
+} from '@shopify/react-native-skia';
 
-import {
-  useSharedValue,
-  useDerivedValue,
-  withRepeat,
-  withTiming,
-} from "react-native-reanimated";
+import { useSharedValue, useDerivedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
 export const Paragraphs = () => {
   const { height, width } = useWindowDimensions();
@@ -29,17 +25,11 @@ export const Paragraphs = () => {
     progress.value = withRepeat(withTiming(0, { duration: 3000 }), -1, true);
   }, []);
 
-  const loopedWidth = useDerivedValue(
-    () => mix(progress.value, width * 0.2, width * 0.8),
-    [progress]
-  );
+  const loopedWidth = useDerivedValue(() => mix(progress.value, width * 0.2, width * 0.8), [progress]);
 
   const customFontMgr = useFonts({
-    Roboto: [
-      require("../../Tests/assets/Roboto-Medium.ttf"),
-      require("../../Tests/assets/Roboto-Regular.ttf"),
-    ],
-    UberMove: [require("../../Tests/assets/UberMove-Medium_mono.ttf")],
+    Roboto: [require('../../Tests/assets/Roboto-Medium.ttf'), require('../../Tests/assets/Roboto-Regular.ttf')],
+    UberMove: [require('../../Tests/assets/UberMove-Medium_mono.ttf')],
   });
 
   const paragraph = useMemo(() => {
@@ -49,24 +39,27 @@ export const Paragraphs = () => {
 
     const fontSize = 20;
     const paragraphBuilder = Skia.ParagraphBuilder.Make({}, customFontMgr);
+    const strokePaint = Skia.Paint();
+    strokePaint.setStyle(PaintStyle.Stroke);
+    strokePaint.setStrokeWidth(1);
 
     const textStyle = {
       fontSize,
-      fontFamilies: ["Roboto"],
-      color: Skia.Color("#000"),
+      fontFamilies: ['Roboto'],
+      color: Skia.Color('#000'),
     };
 
     const coloredTextStyle = {
       fontSize: fontSize * 1.3,
-      fontFamilies: ["Roboto"],
-      color: Skia.Color("#61bea2"),
+      fontFamilies: ['Roboto'],
+      color: Skia.Color('#61bea2'),
     };
 
     const crazyStyle: SkTextStyle = {
-      color: Skia.Color("#000"),
-      backgroundColor: Skia.Color("#CECECE"),
+      color: Skia.Color('#000'),
+      backgroundColor: Skia.Color('#CECECE'),
       fontSize: fontSize * 1.3,
-      fontFamilies: ["Roboto"],
+      fontFamilies: ['Roboto'],
       letterSpacing: -1,
       wordSpacing: 20,
       fontStyle: {
@@ -75,12 +68,12 @@ export const Paragraphs = () => {
       },
       shadows: [
         {
-          color: Skia.Color("#00000044"),
+          color: Skia.Color('#00000044'),
           blurRadius: 4,
           offset: { x: 4, y: 4 },
         },
       ],
-      decorationColor: Skia.Color("#00223A"),
+      decorationColor: Skia.Color('#00223A'),
       decorationThickness: 2,
       decoration: 1,
       decorationStyle: TextDecoration.Overline,
@@ -88,29 +81,27 @@ export const Paragraphs = () => {
 
     paragraphBuilder
       .pushStyle(textStyle)
-      .addText("Hello Skia! 🥳\n\nThis text rendered using the ")
+      .addText('Hello Skia! 🥳\n\nThis text rendered using the ')
       .pushStyle(coloredTextStyle)
-      .addText("SkParagraph ")
+      .addText('SkParagraph ')
       .pop()
-      .addText("module with ");
+      .addText('module with ');
 
     const altColoredTextStyle = {
       ...coloredTextStyle,
-      color: Skia.Color("#f5a623"),
+      color: Skia.Color('#f5a623'),
     };
 
     const retVal = paragraphBuilder
       .pushStyle(altColoredTextStyle)
-      .addText("libgrapheme ")
+      .addText('libgrapheme ')
       .pop()
-      .addText("on iOS.")
+      .addText('on iOS.')
       .pushStyle(textStyle)
-      .addText(
-        "\n\nOn Android we use built-in ICU while on web we use CanvasKit's."
-      )
+      .addText("\n\nOn Android we use built-in ICU while on web we use CanvasKit's.")
       .pop()
-      .pushStyle(crazyStyle)
-      .addText("\n\nWow - this is cool.")
+      .pushStyle(crazyStyle, strokePaint)
+      .addText('\n\nWow - this is cool.')
       .pop()
       .build();
 

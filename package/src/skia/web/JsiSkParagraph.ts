@@ -1,30 +1,20 @@
-import type { CanvasKit, Paragraph } from "canvaskit-wasm";
+import type { CanvasKit, Paragraph } from 'canvaskit-wasm';
 
-import type {
-  SkParagraphStyle,
-  SkRect,
-  SkRectWithDirection,
-  SkTextStyle,
-} from "../types";
-import { type SkParagraph } from "../types";
+import type { SkParagraphStyle, SkRect, SkRectWithDirection, SkTextStyle, SkParagraph } from '../types';
 
-import { HostObject } from "./Host";
-import type { JsiSkCanvas } from "./JsiSkCanvas";
+import { HostObject } from './Host';
+import type { JsiSkCanvas } from './JsiSkCanvas';
 
 // Used for E2E testing
-export type ParagraphNode =
-  | PlaceholderNode
-  | TextNode
-  | PushStyleNode
-  | PopStyleNode;
+export type ParagraphNode = PlaceholderNode | TextNode | PushStyleNode | PopStyleNode;
 
 export type TextNode = {
-  type: "text";
+  type: 'text';
   text: string;
 };
 
 export type PlaceholderNode = {
-  type: "placeholder";
+  type: 'placeholder';
   width: number;
   height: number;
   alignment: number;
@@ -33,12 +23,12 @@ export type PlaceholderNode = {
 };
 
 export type PushStyleNode = {
-  type: "push_style";
+  type: 'push_style';
   style: SkTextStyle;
 };
 
 export type PopStyleNode = {
-  type: "pop_style";
+  type: 'pop_style';
 };
 
 export type ParagraphJson = {
@@ -46,17 +36,9 @@ export type ParagraphJson = {
   style: SkParagraphStyle | undefined;
 };
 
-export class JsiSkParagraph
-  extends HostObject<Paragraph, "Paragraph">
-  implements SkParagraph
-{
-  constructor(
-    CanvasKit: CanvasKit,
-    ref: Paragraph,
-    private elements?: ParagraphNode[],
-    private style?: SkParagraphStyle
-  ) {
-    super(CanvasKit, ref, "Paragraph");
+export class JsiSkParagraph extends HostObject<Paragraph, 'Paragraph'> implements SkParagraph {
+  constructor(CanvasKit: CanvasKit, ref: Paragraph, private elements?: ParagraphNode[], private style?: SkParagraphStyle) {
+    super(CanvasKit, ref, 'Paragraph');
   }
 
   source(): string {
@@ -94,19 +76,12 @@ export class JsiSkParagraph
     }));
   }
   getRectsForRange(start: number, end: number): SkRect[] {
-    return this.ref
-      .getRectsForRange(
-        start,
-        end,
-        { value: 0 } /** kTight */,
-        { value: 0 } /** kTight */
-      )
-      .map(({ rect }) => ({
-        x: rect[0],
-        y: rect[1],
-        width: rect[2],
-        height: rect[3],
-      }));
+    return this.ref.getRectsForRange(start, end, { value: 0 } /** kTight */, { value: 0 } /** kTight */).map(({ rect }) => ({
+      x: rect[0],
+      y: rect[1],
+      width: rect[2],
+      height: rect[3],
+    }));
   }
   getLineMetrics(): SkRect[] {
     return this.ref.getLineMetrics().map((r, index) => ({

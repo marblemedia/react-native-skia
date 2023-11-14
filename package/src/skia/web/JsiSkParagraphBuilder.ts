@@ -1,31 +1,20 @@
-import type { CanvasKit, ParagraphBuilder, TextStyle } from "canvaskit-wasm";
+import type { CanvasKit, Paint, ParagraphBuilder, TextStyle } from 'canvaskit-wasm';
 
-import type {
-  SkParagraphBuilder,
-  SkParagraph,
-  SkTextStyle,
-  SkParagraphStyle,
-} from "../types";
-import { PlaceholderAlignment, TextBaseline } from "../types";
-import { E2E } from "../../__tests__/setup";
+import type { SkParagraphBuilder, SkParagraph, SkTextStyle, SkParagraphStyle, SkPaint } from '../types';
+import { PlaceholderAlignment, TextBaseline } from '../types';
+import { E2E } from '../../__tests__/setup';
 
-import { HostObject } from "./Host";
-import type { ParagraphNode } from "./JsiSkParagraph";
-import { JsiSkParagraph } from "./JsiSkParagraph";
-import { JsiSkTextStyle } from "./JsiSkTextStyle";
+import { HostObject } from './Host';
+import type { ParagraphNode } from './JsiSkParagraph';
+import { JsiSkParagraph } from './JsiSkParagraph';
+import { JsiSkTextStyle } from './JsiSkTextStyle';
+import { JsiSkPaint } from './JsiSkPaint';
 
-export class JsiSkParagraphBuilder
-  extends HostObject<ParagraphBuilder, "ParagraphBuilder">
-  implements SkParagraphBuilder
-{
+export class JsiSkParagraphBuilder extends HostObject<ParagraphBuilder, 'ParagraphBuilder'> implements SkParagraphBuilder {
   elements: Array<ParagraphNode>;
 
-  constructor(
-    CanvasKit: CanvasKit,
-    ref: ParagraphBuilder,
-    private style?: SkParagraphStyle
-  ) {
-    super(CanvasKit, ref, "ParagraphBuilder");
+  constructor(CanvasKit: CanvasKit, ref: ParagraphBuilder, private style?: SkParagraphStyle) {
+    super(CanvasKit, ref, 'ParagraphBuilder');
     this.elements = [];
   }
 
@@ -36,16 +25,10 @@ export class JsiSkParagraphBuilder
     baseline: TextBaseline | undefined = TextBaseline.Alphabetic,
     offset: number | undefined = 0
   ): SkParagraphBuilder {
-    this.ref.addPlaceholder(
-      width,
-      height,
-      { value: alignment },
-      { value: baseline },
-      offset
-    );
+    this.ref.addPlaceholder(width, height, { value: alignment }, { value: baseline }, offset);
     if (E2E) {
       this.elements.push({
-        type: "placeholder",
+        type: 'placeholder',
         width,
         height,
         alignment,
@@ -58,7 +41,7 @@ export class JsiSkParagraphBuilder
   addText(text: string): SkParagraphBuilder {
     if (E2E) {
       this.elements.push({
-        type: "text",
+        type: 'text',
         text,
       });
     }
@@ -68,12 +51,7 @@ export class JsiSkParagraphBuilder
   }
 
   build(): SkParagraph {
-    return new JsiSkParagraph(
-      this.CanvasKit,
-      this.ref.build(),
-      this.elements,
-      this.style
-    );
+    return new JsiSkParagraph(this.CanvasKit, this.ref.build(), this.elements, this.style);
   }
 
   reset(): void {
@@ -84,20 +62,29 @@ export class JsiSkParagraphBuilder
     this.ref.reset();
   }
 
-  pushStyle(style: SkTextStyle): SkParagraphBuilder {
+  pushStyle(style: SkTextStyle, foregroundPaint?: SkPaint | undefined, backgroundPaint?: SkPaint | undefined): SkParagraphBuilder {
     if (E2E) {
-      this.elements.push({ type: "push_style", style });
+      this.elements.push({
+        type: 'push_style',
+        style,
+      });
     }
 
     const textStyle: TextStyle = JsiSkTextStyle.toTextStyle(style);
-    this.ref.pushStyle(new this.CanvasKit.TextStyle(textStyle));
+    if (foregroundPaint || backgroundPaint) {
+      const fg: Paint = foregroundPaint ? JsiSkPaint.fromValue(foregroundPaint) : new this.CanvasKit.Paint();
+      const bg: Paint = backgroundPaint ? JsiSkPaint.fromValue(backgroundPaint) : new this.CanvasKit.Paint();
+      this.ref.pushPaintStyle(new this.CanvasKit.TextStyle(textStyle), fg, bg);
+    } else {
+      this.ref.pushStyle(new this.CanvasKit.TextStyle(textStyle));
+    }
 
     return this;
   }
 
   pop(): SkParagraphBuilder {
     if (E2E) {
-      this.elements.push({ type: "pop_style" });
+      this.elements.push({ type: 'pop_style' });
     }
 
     this.ref.pop();

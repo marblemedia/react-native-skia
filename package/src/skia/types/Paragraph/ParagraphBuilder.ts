@@ -1,9 +1,10 @@
-import type { SkFontMgr } from "../Font";
-import type { SkJSIInstance } from "../JsiInstance";
+import type { SkFontMgr } from '../Font';
+import type { SkJSIInstance } from '../JsiInstance';
+import type { SkPaint } from '../Paint';
 
-import type { SkParagraph } from "./Paragraph";
-import type { SkParagraphStyle } from "./ParagraphStyle";
-import type { SkTextStyle, TextBaseline } from "./TextStyle";
+import type { SkParagraph } from './Paragraph';
+import type { SkParagraphStyle } from './ParagraphStyle';
+import type { SkTextStyle, TextBaseline } from './TextStyle';
 
 export interface ParagraphBuilderFactory {
   /**
@@ -11,10 +12,7 @@ export interface ParagraphBuilderFactory {
    * @param paragraphStyle Initial paragraph style
    * @param fontManager Font manager
    */
-  Make(
-    paragraphStyle?: SkParagraphStyle,
-    fontManager?: SkFontMgr
-  ): SkParagraphBuilder;
+  Make(paragraphStyle?: SkParagraphStyle, fontManager?: SkFontMgr): SkParagraphBuilder;
 }
 
 export enum PlaceholderAlignment {
@@ -45,7 +43,7 @@ export enum PlaceholderAlignment {
   Middle,
 }
 
-export interface SkParagraphBuilder extends SkJSIInstance<"ParagraphBuilder"> {
+export interface SkParagraphBuilder extends SkJSIInstance<'ParagraphBuilder'> {
   /**
    * Creates a Paragraph object from the builder and the inputs given to the builder.
    */
@@ -57,9 +55,11 @@ export interface SkParagraphBuilder extends SkJSIInstance<"ParagraphBuilder"> {
   /**
    * Pushes a text-style to the builder
    * @param style Style to push
+   * @param foregroundPaint Foreground paint object
+   * @param backgroundPaint Background paint object
    * @returns The builder
    */
-  pushStyle: (style: SkTextStyle) => SkParagraphBuilder;
+  pushStyle: (style: SkTextStyle, foregroundPaint?: SkPaint | undefined, backgroundPaint?: SkPaint | undefined) => SkParagraphBuilder;
   /**
    * Pops the current text style from the builder
    * @returns The builder
@@ -79,11 +79,5 @@ export interface SkParagraphBuilder extends SkJSIInstance<"ParagraphBuilder"> {
    * @param baseline
    * @param offset
    */
-  addPlaceholder(
-    width?: number,
-    height?: number,
-    alignment?: PlaceholderAlignment,
-    baseline?: TextBaseline,
-    offset?: number
-  ): SkParagraphBuilder;
+  addPlaceholder(width?: number, height?: number, alignment?: PlaceholderAlignment, baseline?: TextBaseline, offset?: number): SkParagraphBuilder;
 }
