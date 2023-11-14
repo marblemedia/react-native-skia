@@ -212,8 +212,6 @@ public:
     }
   }
 
-  bool _isPending = false;
-
   /**
    * Notifies all drawing callbacks
    * @param invalidated True if the context was invalidated, otherwise false.
@@ -221,15 +219,13 @@ public:
    * drawloop
    */
   void notifyDrawLoop(bool invalidated) {
-    if (!_isValid || _isPending) {
+    if (!_isValid) {
       return;
     }
-    _isPending = true;
     std::lock_guard<std::mutex> lock(_drawCallbacksLock);
     for (auto it = _drawCallbacks.begin(); it != _drawCallbacks.end(); it++) {
       it->second(invalidated);
     }
-    _isPending = false;
   }
 
   // default implementation does nothing, so it can be called from virtual

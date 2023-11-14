@@ -8,9 +8,9 @@ import android.view.Choreographer;
 import com.facebook.jni.HybridData;
 import com.facebook.proguard.annotations.DoNotStrip;
 import com.facebook.react.bridge.ReactContext;
+import com.facebook.react.bridge.UiThreadUtil;
 import com.facebook.react.modules.core.ChoreographerCompat;
 import com.facebook.react.modules.core.ReactChoreographer;
-import com.facebook.react.uimanager.GuardedFrameCallback;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -35,19 +35,42 @@ public class PlatformContext  {
     private final String TAG = "PlatformContext";
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private final ReactChoreographer mReactChoreographer;
-    private final ChoreographerCompat.FrameCallback mChoreographerCallback;
+    private ChoreographerCompat.FrameCallback mChoreographerCallback;
 
     public PlatformContext(ReactContext reactContext) {
         mContext = reactContext;
         mHybridData = initHybrid(reactContext.getResources().getDisplayMetrics().density);
-        mReactChoreographer = ReactChoreographer.getInstance();
-        mChoreographerCallback = new ChoreographerCompat.FrameCallback() {
-            @Override
-            public void doFrame(long frameTimeNanos) {
-                doMyFrame(frameTimeNanos);
-            }
-        };
+    }
+
+    private long lastFrameTime = 0;
+
+    private void postFrameLoop() {
+        if (mChoreographerCallback == null) {
+            mChoreographerCallback = new ChoreographerCompat.FrameCallback() {
+                @Override
+                public void doFrame(long frameTimeNanos) {
+                    doMyFrame(frameTimeNanos);
+                }
+            };
+        }
+        ReactChoreographer.getInstance().postFrameCallback(
+                ReactChoreographer.CallbackType.NATIVE_ANIMATED_MODULE,
+                mChoreographerCallback);
+    }
+
+    public void doMyFrame(long frameTimeNanos) {
+        if (_isPaused) {
+            return;
+        }
+        if (frameTimeNanos > lastFrameTime) {
+            lastFrameTime = frameTimeNanos;
+            notifyDrawLoop();
+        } else {
+            Log.i(TAG, "Dropping frame " + (frameTimeNanos - lastFrameTime));
+        }
+        if (_drawLoopActive) {
+            postFrameLoop();
+        }
     }
 
     private byte[] getStreamAsBytes(InputStream is) throws IOException {
@@ -59,35 +82,6 @@ public class PlatformContext  {
         }
         return buffer.toByteArray();
     }
-
-    private void postFrameLoop() {
-        Log.i(TAG, "postFrameLoop");
-        mReactChoreographer.postFrameCallback(
-                ReactChoreographer.CallbackType.NATIVE_ANIMATED_MODULE, mChoreographerCallback);
-    }
-
-    private double lastFrameTimeMs = 0;
-
-    public void doMyFrame(long frameTimeNanos) {
-        if (_isPaused) {
-            return;
-        }
-        double currentFrameTimeMs = frameTimeNanos / 1000000.;
-        if (currentFrameTimeMs > lastFrameTimeMs) {
-            lastFrameTimeMs = currentFrameTimeMs;
-            notifyDrawLoop();
-        }
-        if (_drawLoopActive) {
-            doNextFrame();
-        }
-    }
-
-    public void doNextFrame() {
-        mReactChoreographer.postFrameCallback(
-                ReactChoreographer.CallbackType.NATIVE_ANIMATED_MODULE,
-                mChoreographerCallback);
-    }
-
 
     @DoNotStrip
     public void notifyTaskReadyOnMainThread() {
@@ -120,19 +114,14 @@ public class PlatformContext  {
             return;
         }
         _drawLoopActive = true;
-        mainHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                postFrameLoop();
-            }
-        });
+        postFrameLoop();
     }
 
     @DoNotStrip
     public void endDrawLoop() {
         if (_drawLoopActive) {
             _drawLoopActive = false;
-            mReactChoreographer.removeFrameCallback(
+            ReactChoreographer.getInstance().removeFrameCallback(
                 ReactChoreographer.CallbackType.NATIVE_ANIMATED_MODULE, mChoreographerCallback);
         }
     }
