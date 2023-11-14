@@ -4,6 +4,7 @@ import {
     Group,
     Rect,
     TouchHandler,
+    Transforms2d,
     useClock,
     useClockValue,
     useComputedValue,
@@ -22,7 +23,9 @@ import Animated, {
     useSharedValue,
     withRepeat,
     withTiming,
+    useWorkletCallback,
 } from 'react-native-reanimated';
+import {runOnUIImmediately} from 'react-native-reanimated/src/reanimated2/threads';
 
 const c1 = '#F00';
 const c2 = '#00F';
@@ -244,27 +247,26 @@ const Breathe06 = () => {
     );
 };
 
-const halfSize = 128;
+const halfSize = 32;
 const origin = vec(halfSize, halfSize);
 
 const Breathe07 = () => {
     const frame = useSharedValue(0);
-    const color = useSharedValue('#FFF');
-    const rotTx = useSharedValue([]);
     useFrameCallback(() => {
-        frame._value = (frame._value + 1) % Number.MAX_SAFE_INTEGER;
+        frame.value = (frame.value + 1) % Number.MAX_SAFE_INTEGER;
     });
 
+    const color = useSharedValue('#FFF');
+    const rotTx = useSharedValue<Transforms2d>([]);
     useAnimatedReaction(
         () => frame.value,
         () => {
-            color._value = frame._value % 2 === 0 ? c2 : c1;
-            rotTx._value = [{rotate: frame._value / 100}];
+            color.value = frame.value % 2 === 0 ? c2 : c1;
+            rotTx.value = [{rotate: frame.value / 100}];
         },
     );
 
     const touches = useSharedValue<{id: number; x: number; y: number}[]>([]);
-
     const translateTx = useDerivedValue(() => {
         const x = touches.value[0]?.x ?? 0;
         const y = touches.value[0]?.y ?? 0;
@@ -296,49 +298,114 @@ const Breathe07 = () => {
 
 const Breathe08 = () => {
     const frame = useSharedValue(0);
-    const color = useSharedValue('#FFF');
-    const rotTx = useSharedValue([]);
     useFrameCallback(() => {
-        frame._value = (frame._value + 1) % Number.MAX_SAFE_INTEGER;
+        frame.value = (frame.value + 1) % Number.MAX_SAFE_INTEGER;
     });
 
-    useAnimatedReaction(
-        () => frame.value,
-        () => {
-            color._value = frame._value % 2 === 0 ? c2 : c1;
-            rotTx._value = [{rotate: frame._value / 100}];
-        },
-    );
-
+    const color = useDerivedValue(() => (frame.value % 2 === 0 ? c2 : c1), [frame]);
     const touches = useSharedValue<{id: number; x: number; y: number}[]>([]);
-
-    const translateTx = useDerivedValue(() => {
+    const transform = useDerivedValue((): Transforms2d => {
         const x = touches.value[0]?.x ?? 0;
         const y = touches.value[0]?.y ?? 0;
-        return [{translateX: x - halfSize}, {translateY: y - halfSize}];
-    });
+        return [
+            {translateX: x - halfSize},
+            {translateY: y - halfSize},
+            {rotate: frame.value / 100},
+        ];
+    }, [frame]);
 
-    const gesture = Gesture.Pan().onUpdate((state) => {
-        touches.value = [{id: 0, x: state.x, y: state.y}];
-    });
+    const gesture = Gesture.Native()
+        .onTouchesDown(({changedTouches}) => {
+            touches.value = changedTouches;
+        })
+        .onTouchesMove(({changedTouches}) => {
+            touches.value = changedTouches;
+        });
 
     return (
         <GestureDetector gesture={gesture}>
-            <Canvas style={{flex: 1}} mode="continuous">
-                <Group transform={translateTx}>
-                    <Group transform={rotTx} origin={origin}>
-                        <Rect
-                            x={0}
-                            y={0}
-                            width={halfSize * 2}
-                            height={halfSize * 2}
-                            color={color}
-                        />
-                    </Group>
+            <Canvas style={{flex: 1}}>
+                <Group transform={transform} origin={origin} color={color}>
+                    <Rect x={0} y={0} width={halfSize * 2} height={halfSize * 2} />
                 </Group>
             </Canvas>
         </GestureDetector>
     );
 };
 
-export const Breathe = Breathe07;
+const Breathe09 = () => {
+    const frame = useSharedValue(0);
+    useFrameCallback(() => {
+        frame.value = (frame.value + 1) % Number.MAX_SAFE_INTEGER;
+    });
+
+    const color = useDerivedValue(() => (frame.value % 2 === 0 ? c2 : c1), [frame]);
+    const transform = useSharedValue<Transforms2d>([]);
+
+    const gesture = Gesture.Native()
+        .onTouchesDown(({changedTouches}) => {
+            const x = changedTouches[0]?.x ?? 0;
+            const y = changedTouches[0]?.y ?? 0;
+            transform.value = [
+                {translateX: x - halfSize},
+                {translateY: y - halfSize},
+                {rotate: frame.value / 100},
+            ];
+        })
+        .onTouchesMove(({changedTouches}) => {
+            const x = changedTouches[0]?.x ?? 0;
+            const y = changedTouches[0]?.y ?? 0;
+            transform.value = [
+                {translateX: x - halfSize},
+                {translateY: y - halfSize},
+                {rotate: frame.value / 100},
+            ];
+        });
+
+    return (
+        <GestureDetector gesture={gesture}>
+            <Canvas style={{flex: 1}}>
+                <Group transform={transform} origin={origin} color={color}>
+                    <Rect x={0} y={0} width={halfSize * 2} height={halfSize * 2} />
+                </Group>
+            </Canvas>
+        </GestureDetector>
+    );
+};
+
+const Breathe10 = () => {
+    const frame = useSharedValue(0);
+    useFrameCallback(() => {
+        frame.value = (frame.value + 1) % Number.MAX_SAFE_INTEGER;
+    });
+
+    const color = useDerivedValue(() => (frame.value % 2 === 0 ? c2 : c1), [frame]);
+    const touches = useSharedValue<{id: number; x: number; y: number}[]>([]);
+    const transform = useDerivedValue((): Transforms2d => {
+        const x = touches.value[0]?.x ?? 0;
+        const y = touches.value[0]?.y ?? 0;
+        return [
+            {translateX: x - halfSize},
+            {translateY: y - halfSize},
+            {rotate: frame.value / 100},
+        ];
+    }, [frame]);
+
+    const handleTouch: TouchHandler = React.useCallback((t) => {
+        touches.value = t[0];
+    }, []);
+
+    return (
+        <Canvas style={{flex: 1}} onTouch={handleTouch}>
+            <Group transform={transform} origin={origin} color={color}>
+                <Rect x={0} y={-100} width={halfSize * 2} height={halfSize * 2} />
+                <Rect x={0} y={0} width={halfSize * 2} height={halfSize * 2} />
+                <Rect x={0} y={100} width={halfSize * 2} height={halfSize * 2} />
+                <Rect x={-100} y={0} width={halfSize * 2} height={halfSize * 2} />
+                <Rect x={100} y={0} width={halfSize * 2} height={halfSize * 2} />
+            </Group>
+        </Canvas>
+    );
+};
+
+export const Breathe = Breathe10;
