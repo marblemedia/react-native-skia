@@ -9,6 +9,7 @@
 #include "JsiSkHostObjects.h"
 #include "RNSkLog.h"
 #include <jsi/jsi.h>
+#include "JskSkGetFirstCodepoint.h"
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdocumentation"
