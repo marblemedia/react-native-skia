@@ -30,7 +30,7 @@
     "jestEnv.mjs",
     "cpp/**/*.{h,cpp}",
     "apple/**",
-    "libs/apple/*.xcframework/**",
+    "libs/**",
     "react-native-skia.podspec",
     "scripts/setup-canvaskit.js",
     "dist/**"
