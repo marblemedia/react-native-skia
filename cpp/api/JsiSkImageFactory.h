@@ -234,32 +234,22 @@ public:
     return RNJsi::JsiPromises::createPromiseAsJSIValue(runtime,
       [this, context = std::move(context), url]
       (jsi::Runtime &runtime, std::shared_ptr<RNJsi::JsiPromises::Promise> promise) -> void {
-        // run this on its own thread, not a js thread
-        std::thread t1([this,
-          &runtime,
-          context = std::move(context),
-          promise = std::move(promise),
-          url]
-          () -> void {
-            // use skia's built-in network streaming method
-            context->performStreamOperation(url,
-              [this, &runtime, context = std::move(context), promise = std::move(promise)]
-              (std::unique_ptr<SkStreamAsset> stream) -> void {
-                auto data = SkData::MakeFromStream(stream.get(), stream->getLength());
-                std::unique_lock<std::mutex> lock(dataMutex);
-                WorkUnit workUnit;
-                workUnit.data = data;
-                workUnit.promise = promise;
+        context->performStreamOperation(url,
+          [this, &runtime, context = std::move(context), promise = std::move(promise)]
+          (std::unique_ptr<SkStreamAsset> stream) -> void {
+          auto data = SkData::MakeFromStream(stream.get(), stream->getLength());
+          std::unique_lock<std::mutex> lock(dataMutex);
+          WorkUnit workUnit;
+          workUnit.data = data;
+          workUnit.promise = promise;
 
-                // enqueue the work unit
-                workQueue.push(workUnit);
+          // enqueue the work unit
+          workQueue.push(workUnit);
 
-                // let the worker thread know there's work to be done
-                dataCV.notify_all();
-                lock.unlock();
-              });
-          });
-      t1.detach();
+          // let the worker thread know there's work to be done
+          dataCV.notify_all();
+          lock.unlock();
+        });
     });
   }
 
