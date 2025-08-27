@@ -80,38 +80,32 @@ public:
    */
   RNSkPictureView(std::shared_ptr<RNSkPlatformContext> context,
                   std::shared_ptr<RNSkCanvasProvider> canvasProvider)
-      : RNSkView(context, canvasProvider, 
-          std::make_shared<RNSkPictureRenderer>(
-            std::bind(&RNSkPictureView::requestRedraw, this), context)),
-        _context(std::move(context)) {}
+      : RNSkView(
+            context, canvasProvider,
+            std::make_shared<RNSkPictureRenderer>(
+                std::bind(&RNSkPictureView::requestRedraw, this), context)) {}
 
   void setJsiProperties(
-    std::unordered_map<std::string, RNJsi::ViewProperty> &props) override {
+      std::unordered_map<std::string, RNJsi::ViewProperty> &props) override {
 
-    _context->runOnMainThread([this, props = std::move(props)]() {        
-      for (auto &prop : props) {
-        if (prop.first == "picture") {
-          if (prop.second.isNull()) {
-            // Clear picture
-            std::static_pointer_cast<RNSkPictureRenderer>(getRenderer())
-                ->setPicture(nullptr);
-            std::static_pointer_cast<RNSkPictureRenderer>(getRenderer())
-              ->renderImmediate(getCanvasProvider());
-            continue;
-          }
-
-          // Save picture
+    for (auto &prop : props) {
+      if (prop.first == "picture") {
+        if (prop.second.isNull()) {
+          // Clear picture
           std::static_pointer_cast<RNSkPictureRenderer>(getRenderer())
-              ->setPicture(prop.second.getPicture());
+              ->setPicture(nullptr);
           std::static_pointer_cast<RNSkPictureRenderer>(getRenderer())
-              ->renderImmediate(getCanvasProvider());
+            ->renderImmediate(getCanvasProvider());
+          continue;
         }
+
+        // Save picture
+        std::static_pointer_cast<RNSkPictureRenderer>(getRenderer())
+            ->setPicture(prop.second.getPicture());
+        std::static_pointer_cast<RNSkPictureRenderer>(getRenderer())
+            ->renderImmediate(getCanvasProvider());
       }
-    });
+    }
   }
-
-private:
-  std::shared_ptr<RNSkPlatformContext> _context;
-
 };
 } // namespace RNSkia
